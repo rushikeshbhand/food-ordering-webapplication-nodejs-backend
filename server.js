@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config(); // Load dotenv configuration
 require('./dbConnect'); 
 const user = require('./models/userModel')
+const contact = require('./models/contactFormModel')
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -51,6 +52,25 @@ app.post('/login', async (req, res)=>{
     console.log(error)
     res.status(400).send(error)
   }
+})
+
+// submit contact form 
+app.post('/contact', async (req, res) => {
+  try{
+    const {name, email, phoneNumber, message} = req.body
+    const newContact = new contact({
+      name,
+      email,
+      phoneNumber,
+      message
+    })
+    const createdContact = await newContact.save()
+    res.status(201).send(createdContact)
+  }catch(err){
+    console.log(err)
+    res.status(400).send(err.message)
+  }
+  const{name , email, phoneNumber, message} = req.body
 })
 
 app.listen(port, () => {
