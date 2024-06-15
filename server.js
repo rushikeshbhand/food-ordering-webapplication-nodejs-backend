@@ -1,11 +1,14 @@
 const express = require('express');
 require('dotenv').config(); // Load dotenv configuration
+const cors = require('cors');
 require('./dbConnect'); 
 const user = require('./models/userModel')
 const contact = require('./models/contactFormModel')
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+app.use(cors());
 
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
@@ -57,6 +60,7 @@ app.post('/login', async (req, res)=>{
 // submit contact form 
 app.post('/contact', async (req, res) => {
   try{
+    console.log(req.body);
     const {name, email, phoneNumber, message} = req.body
     const newContact = new contact({
       name,
