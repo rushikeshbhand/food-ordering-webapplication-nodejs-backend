@@ -29,6 +29,13 @@ Welcome to our Food Web App! This project offers various features for users to b
   - **Password Hashing:** We use `bcrypt` to securely hash and store passwords in the database.
   - **JWT Authentication:** We use JSON Web Tokens (JWT) to provide secure login and sign-up functionality.
 
+  - **How to use bcrypt:**
+  bcrypt.genSalt(10)  // This function is used to generate unique salt and further we integrate this salt into actual user password while we hash the password so as that password become unique even if user input is same as before.
+
+  bcrypt.hash(userPassword, salt) // This function is used to hash the password by integrating unique salt with user password and this is the main function which actually generates hash.
+
+  bcrypt.compare(userInputPassword, storedHashedPassword) // This function is used at login time, when user try to login user enter is password that time user enter password is in plain text so it is not possible to compare plain text password with hash password which is stored in database so that time we have to use comapare function which compares plain text password with hash password. 
+
 ## How It Works
 
 1. **Users:** Can browse food products, add them to their cart, and place orders. They can securely sign up and log in using JWT authentication.
