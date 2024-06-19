@@ -6,12 +6,19 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('./models/userModel');
 const Contact = require('./models/contactFormModel');
+const Product = require('./models/productModel');
+const Cart = require('./models/cartModel');
 
 const app = express();
 const port = process.env.PORT || 4000;
 
+// It allows requests of all origins 
 app.use(cors());
+
+// Is parse form data 
 app.use(express.urlencoded({ extended: true }));
+
+// It parse json data into js object 
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -99,6 +106,62 @@ const verifyingToken = (req, res, next) => {
 // Protected route
 app.get('/getInfo', verifyingToken, (req, res) => {
   res.status(200).json({ message: 'You are authorized to access this route', user: req.user });
+});
+
+// product form 
+app.post('/createProduct', async (req, res)=>{
+  try{
+    const {name, price, imageUrl} = req.body;
+    const newProduct = new Product({name, price, imageUrl})
+    const createdProduct = await newProduct.save();
+    res.status(201).json({message:"Product created successfully", product: createdProduct })
+  }
+  catch(error){
+    console.log(error)
+    res.status(400).json({message:"Error creating product", error})
+  }
+})
+
+// Product retrieval route
+app.get('/products', async (req, res) => {
+  try {
+    const allProducts = await Product.find(); // Use await to get the products
+   
+    res.status(200).json({ message: "All products found successfully", products: allProducts });
+    console.log(allProducts);
+  } catch (err) {
+    res.status(404).json({ message: "Error finding products: " + err });
+  }
+});
+
+// Add Product to Cart
+app.post('/addToCart', verifyingToken, async (req, res) => {
+  const { productId } = req.body;
+  const userId = req.user.userId;
+
+  try {
+    let cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      cart = new Cart({ user: userId, products: [] });
+    }
+    cart.products.push(productId);
+    await cart.save();
+    res.json({ message: 'Product added to cart', cart });
+  } catch (err) {
+    res.status(500).json({ message: 'Error adding product to cart', err });
+  }
+});
+
+// Get Cart
+app.get('/cart', verifyingToken, async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    const cart = await Cart.findOne({ user: userId }).populate('products');
+    res.json({ cart });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching cart', err });
+  }
 });
 
 
