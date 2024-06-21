@@ -13,7 +13,12 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // It allows requests of all origins 
-app.use(cors());
+// Use the CORS middleware with wildcard origin
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: 'GET,POST,PUT,DELETE,OPTIONS',
+  allowedHeaders: 'Content-Type,Authorization',
+}));
 
 // Is parse form data 
 app.use(express.urlencoded({ extended: true }));
