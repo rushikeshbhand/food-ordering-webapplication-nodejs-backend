@@ -14,25 +14,25 @@ const port = process.env.PORT || 4000;
 
 // It allows requests of all origins 
 // Use the CORS middleware with wildcard origin
-// app.use(cors({
-//   origin: '*', // Allow all origins
-//   methods: 'GET,POST,PUT,DELETE,OPTIONS',
-//   allowedHeaders: 'Content-Type,Authorization',
-// }));
-// Configure CORS
-const allowedOrigins = ['http://localhost:3000', 'https://food-ordering-webapplication-nextjs-frontend-dbgri1si1.vercel.app'];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*', // Allow all origins
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization',
 }));
+// Configure CORS
+// const allowedOrigins = 'https://food-ordering-webapplication-nextjs-frontend-dbgri1si1.vercel.app';
+
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: 'GET,POST,PUT,DELETE,OPTIONS',
+//   allowedHeaders: 'Content-Type,Authorization',
+// }));
 
 // Is parse form data 
 app.use(express.urlencoded({ extended: true }));
