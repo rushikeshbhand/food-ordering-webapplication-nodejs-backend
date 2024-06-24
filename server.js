@@ -1,5 +1,5 @@
 const express = require('express');
-require('dotenv').config(); // Load dotenv configuration
+require('dotenv').config(); 
 const cors = require('cors');
 require('./dbConnect'); 
 const bcrypt = require('bcrypt');
