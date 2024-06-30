@@ -17,22 +17,8 @@ const port = process.env.PORT || 4000;
 app.use(cors({
   origin: '*', // Allow all origins
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
-  allowedHeaders: 'Content-Type,Authorization',
+  allowedHeaders: 'Content-Type,Authorization,auth-token'
 }));
-// Configure CORS
-// const allowedOrigins = 'https://food-ordering-webapplication-nextjs-frontend-dbgri1si1.vercel.app';
-
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   methods: 'GET,POST,PUT,DELETE,OPTIONS',
-//   allowedHeaders: 'Content-Type,Authorization',
-// }));
 
 // Is parse form data 
 app.use(express.urlencoded({ extended: true }));
