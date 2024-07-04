@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config(); 
 const cors = require('cors');
 require('./dbConnect'); 
+const Razorpay = require('razorpay')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('./models/userModel');
@@ -26,9 +27,58 @@ app.use(express.urlencoded({ extended: true }));
 // It parse json data into js object 
 app.use(express.json());
 
+console.log('Environment Variables:', process.env.RAZORPAY_KEY_ID, process.env.RAZORPAY_KEY_SECRET); // Check if the variables are loaded
+
 app.get('/', (req, res) => {
   res.send('Hey hello, welcome to authapp');
 });
+
+// Middleware for verifying JWT token
+const verifyingToken = (req, res, next) => {
+  const token = req.header('auth-token');
+  // console.log('Received token:', token); // Log received token
+  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
+
+  try {
+    const verified = jwt.verify(token, process.env.SECRET_KEY);
+    req.user = verified;
+    next();
+  } catch (error) {
+    res.status(400).json({ message: 'Token is not valid' });
+  }
+};
+
+// Razorpay instance
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// Create order route
+app.post('/createOrder', verifyingToken, async (req, res) => {
+  const { amount, currency } = req.body;
+  console.log('Received amount and currency:', amount + currency); // Log the request body
+
+  if (!amount || !currency) {
+    return res.status(400).json({ message: 'Amount and currency are required' });
+  }
+
+  const options = {
+    amount: amount * 100, // amount in the smallest currency unit
+    currency,
+    receipt: `receipt_order_${Math.random() * 1000}`,
+  };
+
+  try {
+    const order = await razorpay.orders.create(options);
+    console.log(order)
+    res.status(200).json(order);
+  } catch (error) {
+    console.log('Error creating order:', error); // Log the specific error
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Signup form 
 app.post('/createUser', async (req, res) => {
@@ -46,7 +96,7 @@ app.post('/createUser', async (req, res) => {
 
     // generating jwt token 
      const payLoad = { userId, email}
-     const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn:'1h'})
+     const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn:'24'})
      console.log(token);
      res.status(201).json({ message: " user created successfully", token, createdUser}) 
   } catch (error) {
@@ -66,7 +116,7 @@ app.post('/login', async (req, res) => {
       if (isPasswordMatch) {
         const userId = userFound._id;
         const payLoad = { userId, email };
-        const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn: '24h' });
         res.status(200).json({ message: 'User found successfully', token, user: userFound });
       } else {
         res.status(401).json({ message: 'Invalid email or password' });
@@ -93,20 +143,6 @@ app.post('/contact', async (req, res) => {
     res.status(400).json({ message: 'Error submitting contact form', error });
   }
 });
-
-// Middleware for verifying JWT token
-const verifyingToken = (req, res, next) => {
-  const token = req.header('auth-token');
-  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
-
-  try {
-    const verified = jwt.verify(token, process.env.SECRET_KEY);
-    req.user = verified;
-    next();
-  } catch (error) {
-    res.status(400).json({ message: 'Token is not valid' });
-  }
-};
 
 // Protected route
 app.get('/getInfo', verifyingToken, (req, res) => {
