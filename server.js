@@ -13,13 +13,14 @@ const Cart = require('./models/cartModel');
 const app = express();
 const port = process.env.PORT || 4000;
 
-// It allows requests of all origins 
-// Use the CORS middleware with wildcard origin
-app.use(cors({
-  origin: '*', // Allow all origins
-  methods: 'GET,POST,PUT,DELETE,OPTIONS',
-  allowedHeaders: 'Content-Type,Authorization,auth-token'
-}));
+// CORS configuration
+const corsOptions = {
+  origin: 'https://food-ordering-webapplication-nextjs-frontend.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'auth-token'],
+};
+
+app.use(cors(corsOptions));
 
 // Is parse form data 
 app.use(express.urlencoded({ extended: true }));
