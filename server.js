@@ -24,7 +24,7 @@ app.use(cors({
 // Is parse form data 
 app.use(express.urlencoded({ extended: true }));
 
-// It parse json data into js object 
+// It parse json data in to js object
 app.use(express.json());
 
 console.log('Environment Variables:', process.env.RAZORPAY_KEY_ID, process.env.RAZORPAY_KEY_SECRET); // Check if the variables are loaded
