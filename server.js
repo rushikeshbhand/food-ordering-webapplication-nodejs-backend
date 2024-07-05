@@ -12,40 +12,23 @@ const Cart = require('./models/cartModel');
 const app = express();
 const port = process.env.PORT || 4000;
 
-// CORS configuration
-const corsOptions = {
-  origin: 'https://food-ordering-webapplication-nextjs-frontend.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'auth-token'],
-};
-
-app.use(cors(corsOptions));
+// It allows requests of all origins 
+// Use the CORS middleware with wildcard origin
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: 'GET,POST,PUT,DELETE,OPTIONS',
+  allowedHeaders: 'Content-Type,Authorization,auth-token'
+}));
 
 // Is parse form data 
 app.use(express.urlencoded({ extended: true }));
 
-// It parse json data in to js object
+// It parse json data into js object 
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Hey hello, welcome to authapp');
 });
-
-// Middleware for verifying JWT token
-const verifyingToken = (req, res, next) => {
-  const token = req.header('auth-token');
-  // console.log('Received token:', token); // Log received token
-  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
-
-  try {
-    const verified = jwt.verify(token, process.env.SECRET_KEY);
-    req.user = verified;
-    next();
-  } catch (error) {
-    res.status(400).json({ message: 'Token is not valid' });
-  }
-};
-
 
 // Signup form 
 app.post('/createUser', async (req, res) => {
@@ -63,7 +46,7 @@ app.post('/createUser', async (req, res) => {
 
     // generating jwt token 
      const payLoad = { userId, email}
-     const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn:'24'})
+     const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn:'1h'})
      console.log(token);
      res.status(201).json({ message: " user created successfully", token, createdUser}) 
   } catch (error) {
@@ -83,7 +66,7 @@ app.post('/login', async (req, res) => {
       if (isPasswordMatch) {
         const userId = userFound._id;
         const payLoad = { userId, email };
-        const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn: '24h' });
+        const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn: '1h' });
         res.status(200).json({ message: 'User found successfully', token, user: userFound });
       } else {
         res.status(401).json({ message: 'Invalid email or password' });
@@ -110,6 +93,20 @@ app.post('/contact', async (req, res) => {
     res.status(400).json({ message: 'Error submitting contact form', error });
   }
 });
+
+// Middleware for verifying JWT token
+const verifyingToken = (req, res, next) => {
+  const token = req.header('auth-token');
+  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
+
+  try {
+    const verified = jwt.verify(token, process.env.SECRET_KEY);
+    req.user = verified;
+    next();
+  } catch (error) {
+    res.status(400).json({ message: 'Token is not valid' });
+  }
+};
 
 // Protected route
 app.get('/getInfo', verifyingToken, (req, res) => {
@@ -171,8 +168,6 @@ app.get('/cart', verifyingToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching cart', err });
   }
 });
-
-
 
 app.listen(port, () => {
   console.log('Example app listening on port ' + port);
