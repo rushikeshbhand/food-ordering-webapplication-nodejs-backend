@@ -2,7 +2,6 @@ const express = require('express');
 require('dotenv').config(); 
 const cors = require('cors');
 require('./dbConnect'); 
-const Razorpay = require('razorpay')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('./models/userModel');
@@ -28,8 +27,6 @@ app.use(express.urlencoded({ extended: true }));
 // It parse json data in to js object
 app.use(express.json());
 
-console.log('Environment Variables:', process.env.RAZORPAY_KEY_ID, process.env.RAZORPAY_KEY_SECRET); // Check if the variables are loaded
-
 app.get('/', (req, res) => {
   res.send('Hey hello, welcome to authapp');
 });
@@ -48,37 +45,6 @@ const verifyingToken = (req, res, next) => {
     res.status(400).json({ message: 'Token is not valid' });
   }
 };
-
-// Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-// Create order route
-app.post('/createOrder', verifyingToken, async (req, res) => {
-  const { amount, currency } = req.body;
-  console.log('Received amount and currency:', amount + currency); // Log the request body
-
-  if (!amount || !currency) {
-    return res.status(400).json({ message: 'Amount and currency are required' });
-  }
-
-  const options = {
-    amount: amount * 100, // amount in the smallest currency unit
-    currency,
-    receipt: `receipt_order_${Math.random() * 1000}`,
-  };
-
-  try {
-    const order = await razorpay.orders.create(options);
-    console.log(order)
-    res.status(200).json(order);
-  } catch (error) {
-    console.log('Error creating order:', error); // Log the specific error
-    res.status(500).json({ error: error.message });
-  }
-});
 
 
 // Signup form 
