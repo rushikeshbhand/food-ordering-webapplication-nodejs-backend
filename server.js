@@ -13,7 +13,6 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // It allows requests of all origins 
-// Use the CORS middleware with wildcard origin
 app.use(cors({
   origin: '*', // Allow all origins
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
