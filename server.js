@@ -87,7 +87,7 @@ app.post('/createUser', async (req, res) => {
 
     // generating jwt token 
     const payLoad = { userId, email }
-    const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn: '1h' })
+    const token = jwt.sign(payLoad, process.env.SECRET_KEY)
     console.log(token);
     res.status(201).json({ message: " user created successfully", token, createdUser })
   } catch (error) {
@@ -107,7 +107,7 @@ app.post('/login', async (req, res) => {
       if (isPasswordMatch) {
         const userId = userFound._id;
         const payLoad = { userId, email };
-        const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign(payLoad, process.env.SECRET_KEY);
         res.status(200).json({ message: 'User found successfully', token, user: userFound });
       } else {
         res.status(401).json({ message: 'Invalid email or password' });
