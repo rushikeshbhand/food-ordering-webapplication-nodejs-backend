@@ -1,13 +1,14 @@
 const express = require('express');
-require('dotenv').config(); 
+require('dotenv').config();
 const cors = require('cors');
-require('./dbConnect'); 
+require('./dbConnect');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('./models/userModel');
 const Contact = require('./models/contactFormModel');
 const Product = require('./models/productModel');
 const Cart = require('./models/cartModel');
+const Razorpay = require('razorpay');
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -25,8 +26,49 @@ app.use(express.urlencoded({ extended: true }));
 // It parse json data into js object 
 app.use(express.json());
 
+// Middleware for verifying JWT token
+const verifyingToken = (req, res, next) => {
+  const token = req.header('auth-token');
+  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
+
+  try {
+    const verified = jwt.verify(token, process.env.SECRET_KEY);
+    req.user = verified;
+    next();
+  } catch (error) {
+    res.status(400).json({ message: 'Token is not valid' });
+  }
+};
+
 app.get('/', (req, res) => {
   res.send('Hey hello, welcome to authapp');
+});
+
+
+// create razor pay order 
+const instance = new Razorpay({
+  key_id: process.env.KEY_ID,
+  key_secret: process.env.KEY_SECRET,
+});
+
+app.post('/createOrder', verifyingToken, (req, res) => {
+  try {
+    const { amount, currency } = req.body;
+    const options = {
+      amount: amount * 100, // amount in the smallest currency unit
+      currency: currency,
+      receipt: `order_rcptid_${Math.random() * 1000}`
+    };
+    instance.orders.create(options, function (err, order) {
+      if (err) {
+        return res.status(500).json({ message: 'Error creating order', err });
+      }
+      res.json({ id: order.id, amount: order.amount, currency: order.currency });
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error creating order' });
+  }
 });
 
 // Signup form 
@@ -36,7 +78,7 @@ app.post('/createUser', async (req, res) => {
     const salt = await bcrypt.genSalt(10)  //generate unique salt to integrate with plaintext password
     const hashedPassword = await bcrypt.hash(password, salt) //generate hashed password using palintext password and unique salt
     console.log(hashedPassword);
-    const newUser = new User({ username, password:hashedPassword, email });
+    const newUser = new User({ username, password: hashedPassword, email });
     const createdUser = await newUser.save();
     console.log(createdUser);
 
@@ -44,10 +86,10 @@ app.post('/createUser', async (req, res) => {
     const userId = createdUser._id;
 
     // generating jwt token 
-     const payLoad = { userId, email}
-     const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn:'1h'})
-     console.log(token);
-     res.status(201).json({ message: " user created successfully", token, createdUser}) 
+    const payLoad = { userId, email }
+    const token = jwt.sign(payLoad, process.env.SECRET_KEY, { expiresIn: '1h' })
+    console.log(token);
+    res.status(201).json({ message: " user created successfully", token, createdUser })
   } catch (error) {
     console.log(error);
     res.status(400).json({ message: 'Error creating user', error });
@@ -93,36 +135,22 @@ app.post('/contact', async (req, res) => {
   }
 });
 
-// Middleware for verifying JWT token
-const verifyingToken = (req, res, next) => {
-  const token = req.header('auth-token');
-  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
-
-  try {
-    const verified = jwt.verify(token, process.env.SECRET_KEY);
-    req.user = verified;
-    next();
-  } catch (error) {
-    res.status(400).json({ message: 'Token is not valid' });
-  }
-};
-
 // Protected route
 app.get('/getInfo', verifyingToken, (req, res) => {
   res.status(200).json({ message: 'You are authorized to access this route', user: req.user });
 });
 
 // product form 
-app.post('/createProduct', async (req, res)=>{
-  try{
-    const {name, price, imageUrl} = req.body;
-    const newProduct = new Product({name, price, imageUrl})
+app.post('/createProduct', async (req, res) => {
+  try {
+    const { name, price, imageUrl } = req.body;
+    const newProduct = new Product({ name, price, imageUrl })
     const createdProduct = await newProduct.save();
-    res.status(201).json({message:"Product created successfully", product: createdProduct })
+    res.status(201).json({ message: "Product created successfully", product: createdProduct })
   }
-  catch(error){
+  catch (error) {
     console.log(error)
-    res.status(400).json({message:"Error creating product", error})
+    res.status(400).json({ message: "Error creating product", error })
   }
 })
 
@@ -130,7 +158,7 @@ app.post('/createProduct', async (req, res)=>{
 app.get('/products', async (req, res) => {
   try {
     const allProducts = await Product.find(); // Use await to get the products
-   
+
     res.status(200).json({ message: "All products found successfully", products: allProducts });
     console.log(allProducts);
   } catch (err) {
