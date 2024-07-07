@@ -71,6 +71,69 @@ app.post('/createOrder', verifyingToken, (req, res) => {
   }
 });
 
+
+
+
+
+// Place order from cart
+app.post('/placeOrder', verifyingToken, async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    const cart = await Cart.findOne({ user: userId }).populate('products');
+    if (!cart) {
+      return res.status(400).json({ message: 'Cart is empty' });
+    }
+
+    const totalPrice = cart.products.reduce((acc, product) => acc + product.price, 0);
+
+    const options = {
+      amount: totalPrice * 100, // amount in the smallest currency unit
+      currency: 'INR',
+      receipt: `order_rcptid_${Math.random() * 1000}`
+    };
+
+    instance.orders.create(options, function (err, order) {
+      if (err) {
+        return res.status(500).json({ message: 'Error creating order', err });
+      }
+
+      // Clear cart after placing order
+      cart.products = [];
+      cart.save();
+
+      res.json({ id: order.id, amount: order.amount, currency: order.currency });
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error placing order' });
+  }
+});
+
+// Remove product from cart
+app.post('/removeFromCart', verifyingToken, async (req, res) => {
+  const { productId } = req.body;
+  const userId = req.user.userId;
+
+  try {
+    let cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      return res.status(400).json({ message: 'Cart not found' });
+    }
+
+    cart.products = cart.products.filter(product => product.toString() !== productId);
+    await cart.save();
+
+    res.json({ message: 'Product removed from cart', cart });
+  } catch (err) {
+    res.status(500).json({ message: 'Error removing product from cart', err });
+  }
+});
+
+
+
+
+
 // Signup form 
 app.post('/createUser', async (req, res) => {
   try {
